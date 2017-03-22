@@ -14,7 +14,16 @@ workers = resource.get_worker(FLAGS.n_worker)
 pss = resource.get_ps(FLAGS.n_ps)
 cluster_spec = {"ps": pss, "worker": workers}
 
+# Init training
 cluster = tf.train.ClusterSpec(cluster_spec)
 server = tf.train.Server(cluster, 
   job_name=resource.resolve_jobname(cluster_spec), 
   task_index=resource.resolve_taskindex(cluster_spec))
+
+# Training with allocated device
+'''
+Do training
+'''
+
+# release resource
+resource.release(cluster_spec)
