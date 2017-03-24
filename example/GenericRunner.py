@@ -1,6 +1,7 @@
 import numpy as np
 import sklearn.preprocessing as prep
 import tensorflow as tf
+from kazoo.client import KazooClient
 
 # Parse input flags
 tf.app.flags.DEFINE_integer("n_worker", 1, "number of worker requested")
@@ -18,6 +19,17 @@ FLAGS = tf.app.flags.FLAGS
 workers = resource.get_worker(FLAGS.n_worker)
 pss = resource.get_ps(FLAGS.n_ps)
 cluster_spec = {"ps": pss, "worker": workers}
+
+# Connect to zookeeper node
+zk = KazooClient(hosts='127.0.0.1:2181')
+zk.start()
+
+zk.ensure_path("/spec")
+zk.create("/spec/node", b"ClusterSpec")
+
+data, stat = zk.get("/spec/node")
+
+cluster_spec = data
 
 # Init training
 cluster = tf.train.ClusterSpec(cluster_spec)
