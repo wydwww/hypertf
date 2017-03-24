@@ -7,6 +7,11 @@ tf.app.flags.DEFINE_integer("n_worker", 1, "number of worker requested")
 tf.app.flags.DEFINE_integer("n_ps", 1, "number of param servers requested")
 tf.app.flags.DEFINE_integer("n_gpu", 1, "number of GPUs requested")
 
+# (optional) venv path
+# generic python script path
+# training python script path
+# resolve possible ps and worker IP:port
+
 FLAGS = tf.app.flags.FLAGS
 
 # Request from service discovery
