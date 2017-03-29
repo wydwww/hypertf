@@ -2,6 +2,7 @@ import numpy as np
 import sklearn.preprocessing as prep
 import tensorflow as tf
 from kazoo.client import KazooClient
+import allocator
 
 # Parse input flags
 tf.app.flags.DEFINE_integer("n_worker", 1, "number of worker requested")
@@ -13,11 +14,14 @@ tf.app.flags.DEFINE_integer("n_gpu", 1, "number of GPUs requested")
 # training python script path
 # resolve possible ps and worker IP:port
 
+
 FLAGS = tf.app.flags.FLAGS
+use_rdma = False
+alc = allocator.Allocator()
 
 # Request from service discovery
-workers = resource.get_worker(FLAGS.n_worker)
-pss = resource.get_ps(FLAGS.n_ps)
+workers = alc.get_ps(FLAGS.n_worker, use_rdma)
+pss = alc.get_ps(FLAGS.n_ps, use_rdma)
 cluster_spec = {"ps": pss, "worker": workers}
 
 # Connect to zookeeper node
@@ -28,9 +32,8 @@ zk.ensure_path("/spec")
 zk.create("/spec/node", b"ClusterSpec")
 
 data, stat = zk.get("/spec/node")
-
 cluster_spec = data
-
+`
 # Init training
 cluster = tf.train.ClusterSpec(cluster_spec)
 server = tf.train.Server(cluster, 
