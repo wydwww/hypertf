@@ -5,10 +5,6 @@ from __future__ import print_function
 import tensorflow as tf
 import sys, time
 
-workers = s.get_workers() #[]
-ps = []
-
-
 # define the functions that are used in the nn
 #
 def weight_variable(shape):
@@ -55,6 +51,7 @@ if FLAGS.job_name == "ps":
     server.join()
 elif FLAGS.job_name == "worker":
     # Between-graph replication
+
     with tf.device(tf.train.replica_device_setter(
             worker_device="/job:worker/task:%d" % FLAGS.task_index, cluster=cluster)):
         global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0),trainable = False) 
