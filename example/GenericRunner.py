@@ -1,44 +1,64 @@
-import numpy as np
-import sklearn.preprocessing as prep
-import tensorflow as tf
+#import tensorflow as tf
 from kazoo.client import KazooClient
-import allocator
+import netifaces as ni
 import resource
-import complex_MNIST as runner
+#import complex_MNIST as runner
+import argparse
 
 # Parse input flags
-tf.app.flags.DEFINE_integer("n_worker", 1, "number of worker requested")
-tf.app.flags.DEFINE_integer("n_ps", 1, "number of param servers requested")
-tf.app.flags.DEFINE_integer("n_gpu", 1, "number of GPUs requested")
 
 # (optional) venv path
 default_venv="source /home/jiacheng/pyenv/tf_dis/bin/activate"
-# resolve possible ps and worker IP:port
 use_rdma = False
-
-# Request from service discovery
-workers = alc.get_ps(FLAGS.n_worker, use_rdma)
-pss = alc.get_ps(FLAGS.n_ps, use_rdma)
-cluster_spec = {"ps": pss, "worker": workers}
+h_list = '192.168.2.202:12181'
+device_list = [0,1]
 
 # Connect to zookeeper node
-zk = KazooClient(hosts='192.168.2.202:12181')
-zk.start()
-zk.ensure_path("/spec")
-zk.create("/spec/node", b"ClusterSpec")
-
-data, stat = zk.get("/spec/node")
-cluster_spec = data
-`
-# Init training
-cluster = tf.train.ClusterSpec(cluster_spec)
-server = tf.train.Server(cluster, 
-  job_name=resource.resolve_jobname(cluster_spec), 
-  task_index=resource.resolve_taskindex(cluster_spec))
-
-# Training with allocated device
-runner.run(cluster_used, job_name, task_index, venv, protocol_used):
+def report(use_rdma, device_no):
+    zk = KazooClient(hosts=h_list)
+    zk.start()
+    zk.ensure_path("/tf/node")
+    zk.ensure_path("/tf/ps_node")
+    zk.ensure_path("/tf/wk_node")
     
+    for i in range(len(device_list)):
+        ip_port = get_ip(use_rdma)+":"+str(12200+i)
+        if not zk.exists("/tf/node/"+ip_port):
+            zk.create("/tf/node/"+ip_port, str(device_list[i]))
+    return
 
-# release resource
-resource.release(cluster_spec)
+def get_ip(use_rdma):
+    ip = ""
+    if use_rdma:
+        ip = ni.ifaddresses('eth2')[2][0]['addr']
+    else:
+        ip = ni.ifaddresses('eth2.199')[2][0]['addr']
+    return ip
+
+def allocate(zk, ps_no, wk_no, use_rdma):
+    all_node_list = zk.get_children('/tf/node/')
+    ps_list = all_node_list[0:ps_no]
+    wk_list = all_node_list[ps_no:ps_no+wk_no]
+    print ps_list
+    print wk_list
+    
+    zk.delete("/tf/ps_node")
+    zk.delete("/tf/wk_node")
+    zk.ensure_path("/tf/ps_node")
+    zk.ensure_path("/tf/wk_node")
+    
+    for l in ps_list:
+        zk.create("/tf/ps_node" + l)
+    for l in wk_list:
+        zk.create("/tf/wk_node" + l)
+
+        
+if __name__ == '__main__':
+    zk = KazooClient(hosts=h_list)
+    zk.start()
+    parser = argparse.ArgumentParser(description='Connect to Kazoo server, or do allocation')
+    report(False,2)
+    # if it is master we change
+    allocate(zk,1,1,False)
+
+    #runner.run(cluster_used, job_name, task_index, venv, protocol_used)
