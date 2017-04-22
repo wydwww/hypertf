@@ -23,28 +23,11 @@ def abort_if_resource_doesnt_exist(resource_id):
         abort(404, message="Resource {} doesn't exist".format(resource_id))
 
 def get_resources_from_kz(zk):
-    ps_list = zk.get_children('/resources/')
-    # wk_list = zk.get_children('/tf/masters/masters1/wk_node/')
     resources_from_kz = []
-    j = 1
-    for i in ps_list:
-        ps_node = {
-            "idle": 1,
-            "id": j,
-            "title": i
-            }
-        j += 1
+    for i in xrange(4):
+        ps_node, stat = zk.get('/resources/node' + str(i))
         resources_from_kz.append(ps_node)
 
-    # j = 1
-    # for i in wk_list:
-    #     wk_node = {
-    #         "idle": true,
-    #         "id": j,
-    #         "title": i
-    #         }
-    #     j += 1
-    #     resources_from_kz.append(wk_node)
     return resources_from_kz
 
 parser = reqparse.RequestParser()
@@ -62,10 +45,9 @@ class Single_machine(Resource):
         args = parser.parse_args()
         node = {
             "idle": args["idle"],
-            "id": args["id"], # TODO: add id argument
-            "title": resource_id
+            "id": args["id"]
             }
-        resource[int(resource_id[4])] = node # TODO: id
+        resource[int(resource_id[-1])] = node
         # update resource info in zookeeper
         zk = KazooClient(hosts=h_list)
         zk.start()
@@ -81,14 +63,17 @@ class ResourceList(Resource):
         args = parser.parse_args()
         resources_idle = []
         j = 0
+        if (int(args["pss"]) + int(args["wks"])) > len(resource):
+            abort(404, message = "no enough resources")
         while (len(resources_idle) < int(args["pss"])):
-            i = resource[j]
-            if i["idle"] == 1:
+            if type(resource[j]) is str:
+                i = eval(resource[j])
+            if type(resource[j]) is dict:
+                i = resource[j]
+            if int(i["idle"]) == 1:
                 resources_idle.append(i)
-                # put(self.rm_addr + "/resources/node1", data = {"idle": 0})
             j = j + 1
         return resources_idle
-        # return resource
 
 api.add_resource(ResourceList, '/resources') 
 api.add_resource(Single_machine, '/resources/<resource_id>')
@@ -98,5 +83,5 @@ if __name__ == '__main__':
     zk = KazooClient(hosts=h_list)
     zk.start()
     resource = get_resources_from_kz(zk)
-#    print resource
+    #print resource
     app.run(debug=True)
