@@ -63,9 +63,12 @@ class ResourceList(Resource):
         args = parser.parse_args()
         resources_idle = []
         j = 0
-        if (int(args["pss"]) + int(args["wks"])) > len(resource):
+        pss = int(args["pss"])
+        wks = int(args["wks"])
+        res_number = pss + wks
+        if res_number > len(resource):
             abort(404, message = "no enough resources")
-        while (len(resources_idle) < int(args["pss"])):
+        while (len(resources_idle) < res_number):
             if type(resource[j]) is str:
                 i = eval(resource[j])
             if type(resource[j]) is dict:
