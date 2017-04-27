@@ -1,5 +1,5 @@
 # import hypertf
-#import tensorflow as tf
+# import tensorflow as tf
 from resource_client import client
 import argparse
 import subprocess
@@ -13,14 +13,15 @@ import time, sys, os
 
 #FLAGS = tf.app.flags.FLAGS
 
+# parse ps and worker arguments
 parser = argparse.ArgumentParser(description='Obtain parameters.')
 parser.add_argument('-p', '--ps_num', help = 'number of parameter servers', type = int, required=True)
 parser.add_argument('-w', '--wk_num', help = 'number of workers', type = int, required=True)
 args = vars(parser.parse_args())
 
-parameter_servers = args['ps_num']#FLAGS.ps_num
-workers = args['wk_num']#FLAGS.wk_num
-rm_addr = "http://localhost:5000" # FLAGS.rm_addr
+parameter_servers = args['ps_num'] #FLAGS.ps_num
+workers = args['wk_num'] #FLAGS.wk_num
+rm_addr = "http://192.168.2.200:5000" # "http://localhost:5000" # FLAGS.rm_addr
 
 # connect to resource manager
 rm = client(rm_addr)
@@ -58,13 +59,15 @@ res_list_192 = ps_ip_192 + wk_ip_192
 print "Computing..."
 print (str(ps_ip).replace(" ", "")+ str(wk_ip).replace(" ", ""))
 index = 0
+
+# connect to pss and workers by SSH with cluster specs
 for i in res_list_192:
     #command = "sh run_all.sh " + str(i) + str(ps_ip).replace(" ", "") +str(wk_ip).replace(" ", "")
     process = subprocess.Popen(["sh", "run_all.sh", str(ps_ip).replace(" ", ""), str(wk_ip).replace(" ", ""), str(i), str(index)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    print stderr
     index = index + 1
 
+# check 'done' code from file
 logdir = "/home/ywang/hypertf/hypertf/stderr/"
 loglist = os.listdir(logdir)
 while True:
@@ -77,6 +80,7 @@ while True:
         status.close()
         time.sleep(2)
         if len(loglist) == 1:
+            
             # release resource
             print("Release resources...")
             rm.release(resource_list)

@@ -1,7 +1,8 @@
 #!flask/bin/python
 
-# resource manager, it's a server connecting to cluster runner clients and resource query clients on physical servers,
-# and a client connecting to zookeeper server
+# resource manager, it's a server connecting to cluster runner clients 
+# , and resource query clients on physical servers
+# , and a client connecting to zookeeper server
 
 from flask import Flask, jsonify, abort, request, make_response, url_for
 from kazoo.client import KazooClient
@@ -9,11 +10,10 @@ from flask_restful import reqparse, abort, Api, Resource
 from requests import put, get
 import json
 
-# h_list = '192.168.2.202:12181'
+h_list = '192.168.2.200:2181'
 
 # test on local
-# TODO
-h_list = '127.0.0.1:2181'
+# h_list = '127.0.0.1:2181'
 
 app = Flask(__name__)
 api = Api(app)
@@ -90,3 +90,4 @@ if __name__ == '__main__':
     resource = get_resources_from_kz(zk)
     #print resource
     app.run(debug=True)
+

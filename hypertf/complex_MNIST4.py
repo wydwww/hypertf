@@ -36,8 +36,12 @@ tf.app.flags.DEFINE_string("wk_list", "", "Workers")
 tf.app.flags.DEFINE_string("job_name", "", "Either 'ps' or 'worker'.")
 tf.app.flags.DEFINE_integer("task_index", 0, "Index of task within the job")
 FLAGS = tf.app.flags.FLAGS
+
 parameter_servers = []
 workers = []
+
+# weird because python subprocess module can't handle double qoutes
+# eg. ["10.40.199.203:12301"] became [10.40.199.203:12301]
 parameter_servers1 = FLAGS.ps_list[1:-1].split(',')
 workers1 = FLAGS.wk_list[1:-1].split(',')
 for i in parameter_servers1:
