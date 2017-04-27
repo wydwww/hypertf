@@ -35,6 +35,7 @@ parser.add_argument("idle")
 parser.add_argument("id")
 parser.add_argument("pss")
 parser.add_argument("wks")
+parser.add_argument("ip")
 
 class Single_machine(Resource):
     def get(self, resource_id):
@@ -45,7 +46,8 @@ class Single_machine(Resource):
         args = parser.parse_args()
         node = {
             "idle": args["idle"],
-            "id": args["id"]
+            "id": args["id"],
+            "ip": args["ip"]
             }
         resource[int(resource_id[-1])] = node
         # update resource info in zookeeper
