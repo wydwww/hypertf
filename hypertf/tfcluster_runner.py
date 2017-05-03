@@ -21,7 +21,7 @@ args = vars(parser.parse_args())
 
 parameter_servers = args['ps_num'] #FLAGS.ps_num
 workers = args['wk_num'] #FLAGS.wk_num
-rm_addr = "http://192.168.2.200:5000" # "http://localhost:5000" # FLAGS.rm_addr
+rm_addr = "http://127.0.0.1:5000" # "http://localhost:5000" # FLAGS.rm_addr
 
 # connect to resource manager
 rm = client(rm_addr)
