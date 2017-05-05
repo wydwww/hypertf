@@ -6,8 +6,8 @@ class client:
     def __init__(self, rm_address):
         self.rm_addr = rm_address
 
-    def send_req(self, parameter_servers, workers):
-        resources_list = get(self.rm_addr + "/resources", data = {"pss": parameter_servers, "wks": workers}).json()
+    def send_req(self, parameter_servers, workers, gpus):
+        resources_list = get(self.rm_addr + "/resources", data = {"pss": parameter_servers, "wks": workers, "gpus": gpus}).json()
         pss_list = resources_list[0:parameter_servers]
         wks_list = resources_list[parameter_servers:]
         for i in resources_list:

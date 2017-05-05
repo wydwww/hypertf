@@ -36,6 +36,31 @@ parser.add_argument("id")
 parser.add_argument("pss")
 parser.add_argument("wks")
 parser.add_argument("ip")
+parser.add_argument("gpus")
+
+# resource schedule
+def schedule(ps_num, wk_num, gpu_num):
+    resource_return = []
+    res_number = ps_num + wk_num
+    server_num = res_number / gpu_num # Let's assume it can be divided for now.
+    
+    if gpu_num > 4:
+        abort(404, message = "a single server has max 4 GPUs")
+    if res_number > len(resource): 
+        abort(404, message = "no enough resources") 
+
+    j = 0
+
+    while (len(resource_return) < server_num): 
+        if type(resource[j]) is str: 
+            i = eval(resource[j]) 
+        if type(resource[j]) is dict: 
+            i = resource[j] 
+        if int(i["idle"]) == 1: 
+            resource_return.append(i) 
+        j = j + 1
+
+    return resource_return
 
 class Single_machine(Resource):
     def get(self, resource_id):
@@ -63,22 +88,10 @@ class Single_machine(Resource):
 class ResourceList(Resource):
     def get(self):
         args = parser.parse_args()
-        resources_idle = []
-        j = 0
         pss = int(args["pss"])
         wks = int(args["wks"])
-        res_number = pss + wks
-        if res_number > len(resource):
-            abort(404, message = "no enough resources")
-        while (len(resources_idle) < res_number):
-            if type(resource[j]) is str:
-                i = eval(resource[j])
-            if type(resource[j]) is dict:
-                i = resource[j]
-            if int(i["idle"]) == 1:
-                resources_idle.append(i)
-            j = j + 1
-        return resources_idle
+        gs = int(args["gpus"])
+        return schedule(pss, wks, gs)
 
 api.add_resource(ResourceList, '/resources') 
 api.add_resource(Single_machine, '/resources/<resource_id>')
