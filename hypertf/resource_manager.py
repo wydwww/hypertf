@@ -12,9 +12,6 @@ import json
 
 h_list = '192.168.2.200:2181'
 
-# test on local
-# h_list = '127.0.0.1:2181'
-
 app = Flask(__name__)
 api = Api(app)
 
@@ -22,13 +19,14 @@ def abort_if_resource_doesnt_exist(resource_id):
     if resource_id not in resource:
         abort(404, message="Resource {} doesn't exist".format(resource_id))
 
-def get_resources_from_kz(zk):
-    resources_from_kz = []
-    for i in xrange(4):
-        ps_node, stat = zk.get('/resources/node' + str(i))
-        resources_from_kz.append(ps_node)
-
-    return resources_from_kz
+def get_resource(zk):
+    resource_dict = {}
+    resource_list_unicode = zk.get_children("resources/") 
+    resource_list = list(map(lambda x: str(x), resource_list_unicode))
+    for i in resource_list:
+        resource_node, stat = zk.get('/resources/%s' % i)
+        resource_dict[i] = resource_node
+    return resource_dict
 
 parser = reqparse.RequestParser()
 parser.add_argument("idle")
@@ -40,7 +38,9 @@ parser.add_argument("gpus")
 
 # resource schedule
 def schedule(ps_num, wk_num, gpu_num):
-    resource_return = []
+    resource_offered = []
+    ps_offered = []
+    wk_offered = []
     res_number = ps_num + wk_num
     server_num = res_number / gpu_num # Let's assume it can be divided for now.
     
@@ -51,16 +51,20 @@ def schedule(ps_num, wk_num, gpu_num):
 
     j = 0
 
-    while (len(resource_return) < server_num): 
+    while (len(resource_offered) < server_num): 
+        i = resource.values()[j]
         if type(resource[j]) is str: 
             i = eval(resource[j]) 
         if type(resource[j]) is dict: 
             i = resource[j] 
-        if int(i["idle"]) == 1: 
+        if len(i["gpu_avail_list"]) > 1: 
             resource_return.append(i) 
         j = j + 1
+    
+    ps_offered = resource_offered[0:ps_num]
+    wk_offered = resource_offered[ps_num:]
 
-    return resource_return
+    return resource_offered
 
 class Single_machine(Resource):
     def get(self, resource_id):
@@ -100,7 +104,8 @@ if __name__ == '__main__':
     
     zk = KazooClient(hosts=h_list)
     zk.start()
-    resource = get_resources_from_kz(zk)
-    #print resource
+    resource = get_resource(zk)
+    for i in resource:
+        print resource[i]
     app.run(debug=True)
 
