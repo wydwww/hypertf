@@ -43,15 +43,16 @@ def print_node_usage(host, gpu_index, Matrix):
 
 if __name__ == '__main__':
 
-    zk = KazooClient(hosts='192.168.2.200:2181', read_only=True) 
+    zk = KazooClient(hosts='192.168.2.200:2181') 
     zk.start() 
     resource = get_resource(zk)
     server_range = resource.keys()
     node_name = "usage_matrix"
     matrix = build_matrix(resource)    
+    save_matrix(matrix, node_name)
 
+    # test
     print_node_usage('node_192.168.2.202', 2, matrix)
-
     print_node_usage('node_192.168.2.200', 3, matrix)
 
     print 'node order: '
@@ -60,5 +61,4 @@ if __name__ == '__main__':
     print
 
     print_matrix(matrix)
-    save_matrix(matrix, node_name)
 

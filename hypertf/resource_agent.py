@@ -34,7 +34,7 @@ def get_available_gpu_index():
 
 gpu = get_available_gpu_index()
 
-def check_gpu_avail(ind, MBmemory_needed=10000): 
+def check_gpu_avail(ind, MBmemory_needed=20000): 
     ans = True 
     nvmlInit() 
     if ind >= nvmlDeviceGetCount(): 
