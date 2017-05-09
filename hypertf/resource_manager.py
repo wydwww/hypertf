@@ -9,7 +9,6 @@ from kazoo.client import KazooClient
 from flask_restful import reqparse, abort, Api, Resource
 from requests import put, get
 import json
-#from resource_matrix import print_matrix, get_node_usage, save_matrix, print_node_usage
 
 h_list = '192.168.2.200:2181'
 
@@ -39,47 +38,37 @@ parser.add_argument("id")
 parser.add_argument("pss")
 parser.add_argument("wks")
 parser.add_argument("ip")
-parser.add_argument("gpus")
+#parser.add_argument("gpus")
 parser.add_argument("matrix")
 
 # resource schedule
-def schedule(ps_num, wk_num, gpu_num):
+def schedule(ps_num, wk_num):
     resource_offered = []
     ps_offered = []
     wk_offered = []
     res_number = ps_num + wk_num
-    round_num = res_number / gpu_num 
-    remainder = res_number % gpu_num
-    origin = round_num
 
     # schedule resource according to matrix
     # round robin
-    # not consider all gpus on a server all unavailable now
-    while (round_num != 0): 
-        print round_num, len(resource)
-        for i in xrange(len(resource)):
-            for j in gpu_range:
-                if (matrix[i][j] == 1):
-                    resource_offered.append([server_range[i], j])
-                    matrix[i][j] = 0
+    for i in gpu_range:
+        for j in xrange(len(server_range)):
+            if (matrix[j][i] == 1):
+                resource_offered.append([resource[server_range[j]], gpu_range[i]])
+                matrix[j][i] = 0
+                if len(resource_offered) >= res_number:
                     break
-        round_num -= 1    
-
-    while (remainder != 0):
-        for j in gpu_range:
-            if (matrix[i][j] == 1):
-                resource_offered.append([server_range[i], j])
-                matrix[origin][j] == 0
-                break
-        remainder -= 1
+        if len(resource_offered) >= res_number:
+            break
+    print 'resource offered:'
     print resource_offered
-    
-    if gpu_num > 4:
-        abort(404, message = "a single server has max 4 GPUs")
+    print 'matrix now:'
+    print matrix
+    #reduce(lambda x,y :x+y ,matrix)
+
+#    if gpu_num > 4:
+#        abort(404, message = "a single server has max 4 GPUs")
     if res_number > 16: 
         abort(404, message = "no enough resources") 
-
-    j = 0
 
 #    while (len(resource_offered) < server_num): 
 #        i = resource.values()[j]
@@ -93,14 +82,14 @@ def schedule(ps_num, wk_num, gpu_num):
     
 #    ps_offered = resource_offered[0:ps_num]
 #    wk_offered = resource_offered[ps_num:]
-
+    zk.set("/usage_matrix", json.dumps(matrix))
     return resource_offered
 
 class Single_machine(Resource):
     def get(self, resource_id):
         abort_if_resource_doesnt_exist(resource_id)
         return resource[resource_id]    
-    
+    '''
     def put(self, resource_id):
         args = parser.parse_args()
         node = {
@@ -118,24 +107,29 @@ class Single_machine(Resource):
         else:
             zk.create("/resources/" + resource_id, json.dumps(node))
         return
-
+    '''
 class ResourceList(Resource):
     def get(self):
         args = parser.parse_args()
         pss = int(args["pss"])
         wks = int(args["wks"])
-        gs = int(args["gpus"])
-        return schedule(pss, wks, gs)
+        #gs = int(args["gpus"])
+        return schedule(pss, wks)
 
 class ResourceMatrix(Resource):
     def get(self):
         return matrix
     
     def put(self):
-        new_matrix = args["matrix"]
-        if type(new_matrix) == str:
-            new_matrix = eval(new_matrix)
-        zk.set("usage_matrix", json.dumps(new_matrix))
+        args = parser.parse_args()
+        release_list = args["matrix"]
+        release_list = eval(release_list)
+        for i in release_list:
+            print i
+            matrix[server_range.index('node_'+eval(i[0])['eth0'])][i[1]] = 1
+        zk.set("usage_matrix", json.dumps(matrix))
+        print 'matrix now:'
+        print matrix
 
 api.add_resource(ResourceList, '/resources') 
 api.add_resource(Single_machine, '/resources/<resource_id>')
@@ -149,10 +143,10 @@ if __name__ == '__main__':
     matrix = get_resource_matrix(zk)
     server_range = resource.keys()
     gpu_range = eval(resource.values()[0])['gpu_avail_list']
-    print matrix
+    #print matrix
     for i in resource:
         print resource[i]
-    print resource
-    schedule(1, 8, 4)
-#    app.run(debug=True)
+#    print resource
+#    schedule(1, 3)
+    app.run(debug=True)
 
