@@ -6,6 +6,6 @@ ssh 192.168.2.201 "source /home/jiacheng/pyenv/tf_dis/bin/activate && cd /home/y
 
 ssh 192.168.2.202 "source /home/jiacheng/pyenv/tf_dis/bin/activate && cd /home/ywang/hypertf/hypertf && python write_data.py &"
 
-#ssh 192.168.2.203 "source /home/jiacheng/pyenv/tf_dis/bin/activate && cd /home/ywang/hypertf/hypertf && python write_data.py &"
+ssh 192.168.2.203 "source /home/jiacheng/pyenv/tf_dis/bin/activate && cd /home/ywang/hypertf/hypertf && python write_data.py &"
 
 
