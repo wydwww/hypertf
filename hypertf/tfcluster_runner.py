@@ -4,6 +4,9 @@ from resource_client import client
 import argparse
 import subprocess
 import time, sys, os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # obtain parameters from command line.
 #tf.app.flags.DEFINE_string('rm_addr', '', "ip: port of resource manager")
@@ -24,9 +27,11 @@ parameter_servers = args['ps_num'] #FLAGS.ps_num
 workers = args['wk_num'] #FLAGS.wk_num
 rm_addr = "http://127.0.0.1:5000" # "http://localhost:5000" # FLAGS.rm_addr
 #gpu_num = args['GPU_num_per_server']
+logger.info('Get hyperparameters from command line.\n number of parameter servers: {} \n number of workers: {}'.format(parameter_servers, workers))
 
 # connect to resource manager
 rm = client(rm_addr)
+logger.info('Connected to resource manager: {}'.format(rm_addr))
 
 # request resource
 pss_list, wks_list = rm.send_req(parameter_servers, workers)
@@ -65,6 +70,8 @@ print wk_eth0
 print "gpu index:"
 print gpu_index
 
+logger.info('Get resource.\n ps: {} \n worker: {} \n gpu: {}'.format(ps_eth0, wk_eth0, gpu_index))
+
 """ compute """
 print "Computing..."
 #print (str(ps_ip).replace(" ", "")+ str(wk_ip).replace(" ", ""))
@@ -94,8 +101,6 @@ while True:
             # release resource
             print("Release resources...")
             rm.release(resource_list)
+            logger.info('Release resource. Exit.')
             sys.exit(0)
 
-print("Release resources...")             
-rm.release(resource_list)
-print resource_list

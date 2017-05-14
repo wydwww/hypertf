@@ -1,5 +1,5 @@
 from kazoo.client import KazooClient  
-import json
+import json, time
 import netifaces as ni
 from netifaces import AF_INET, AF_LINK, AF_PACKET, AF_BRIDGE 
 import socket 
@@ -14,6 +14,7 @@ network_interface = ni.interfaces()
 eth0 = ni.ifaddresses('eth0')[AF_INET][0]['addr']
 eth2 = ni.ifaddresses('eth2')[AF_INET][0]['addr']
 
+# find a free port
 def get_port(): 
     s = socket.socket() 
     s.bind(('', 0)) 
@@ -34,21 +35,50 @@ def get_available_gpu_index():
 
 gpu = get_available_gpu_index()
 
-def check_gpu_avail(ind, MBmemory_needed=10000): 
+def check_gpu_avail(ind, max_gpu_utilization=40, min_free_memory=50): 
     ans = True 
     nvmlInit() 
+    
+    # Read the gpu information multiple times
+    num_times_to_average = 5
     if ind >= nvmlDeviceGetCount(): 
         ans = False 
         nvmlShutdown() 
         print (ans) 
         return ans 
-    handle = nvmlDeviceGetHandleByIndex(ind) 
-    meminfo = nvmlDeviceGetMemoryInfo(handle) 
-    if meminfo.free/1024.**2 > MBmemory_needed: 
+    
+    current_gpu_util = 0
+    current_mem_util = 0
+    '''    
+    for i in xrange(num_times_to_average):
+        nvmlInit()
+        handle = nvmlDeviceGetHandleByIndex(ind)
+        #meminfo = nvmlDeviceGetMemoryInfo(handle)
+        util = nvmlDeviceGetUtilizationRates(handle)
+        #mem_util = meminfo.used/meminfo.total
+        print util.gpu
+        current_gpu_util += util.gpu
+        current_mem_util += util.memory
+        nvmlShutdown()
+        time.sleep(2)
+
+    avg_gpu_util = current_gpu_util / num_times_to_average
+    avg_mem_util = current_mem_util / num_times_to_average
+    print avg_gpu_util, avg_mem_util
+    '''
+    
+
+    handle = nvmlDeviceGetHandleByIndex(ind)
+    util = nvmlDeviceGetUtilizationRates(handle)
+    print util.gpu, util.memory    
+
+    if util.gpu < max_gpu_utilization and util.memory < min_free_memory:
+    #if meminfo.free/meminfo.total > max_gpu_utilization:
+    #if meminfo.free/1024.**2 > MBmemory_needed: 
         ans = True 
     else: 
         ans = False 
-    nvmlShutdown()
+    #nvmlShutdown()
     output = "No. %s GPU available? " % str(ind)
     print(output + str(ans)) 
     return ans
@@ -58,7 +88,7 @@ gpu_avail_list = []
 for i in xrange(gpu):
     if check_gpu_avail(i):
         gpu_avail_list.append(i)
-    
+
 resource_node = {
     #"idle": 1,
     #"id": args['id'],

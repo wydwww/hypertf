@@ -3,14 +3,15 @@ import json
 from resource_manager import get_resource
 
 def build_matrix(resource):
+    print resource
     # server index 
     server_range = resource.keys()
     # gpu index
-    gpu_range = eval(resource.values()[0])['gpu_avail_list']
-    
+    #gpu_range = eval(resource.values()[0])['gpu_avail_list']
+    gpu_range = xrange(eval(resource.values()[0])['gpu']) 
+
     # matrix is a two-dimensional array, x for server, y for gpu
     matrix = [[0 for x in server_range] for y in gpu_range]
-   
     for i in xrange(len(server_range)):
         for j in eval(resource.values()[i])['gpu_avail_list']:    
             print 'set ' + server_range[i] + ' gpu ' + str(j) + ' to 1'
