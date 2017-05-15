@@ -35,6 +35,11 @@ tf.app.flags.DEFINE_string("ps_list", "", "Parameter servers")
 tf.app.flags.DEFINE_string("wk_list", "", "Workers")
 tf.app.flags.DEFINE_string("job_name", "", "Either 'ps' or 'worker'.")
 tf.app.flags.DEFINE_integer("task_index", 0, "Index of task within the job")
+tf.app.flags.DEFINE_integer("batch_size", "", "Batch size")
+tf.app.flags.DEFINE_float("learning_rate", "", "Learning rate")
+tf.app.flags.DEFINE_integer("epoch", "", "Training epoch")
+tf.app.flags.DEFINE_string("protocol", "", "Protocol")
+
 FLAGS = tf.app.flags.FLAGS
 
 parameter_servers = []
@@ -58,11 +63,11 @@ cluster = tf.train.ClusterSpec({"ps": parameter_servers,
 server = tf.train.Server(cluster,
                          job_name = FLAGS.job_name,
                          task_index = FLAGS.task_index,
-                         protocol = 'grpc')
+                         protocol = FLAGS.protocol)
 
-batch_size = 110
-learning_rate = 0.001
-training_epochs = 1
+batch_size = FLAGS.batch_size
+learning_rate = FLAGS.learning_rate
+training_epochs = FLAGS.epoch
 tester = 1024*3
 split_no = 1
 logs_path = "./conv_mnist/" + str(len(workers))

@@ -20,13 +20,25 @@ logger = logging.getLogger(__name__)
 parser = argparse.ArgumentParser(description='Obtain parameters.')
 parser.add_argument('-p', '--ps_num', help = 'number of parameter servers', type = int, required=True)
 parser.add_argument('-w', '--wk_num', help = 'number of workers', type = int, required=True)
+parser.add_argument('-ptc', '--protocol', help = 'protocol to use, grpc or rdma', default='grpc', type=str)
 #parser.add_argument('-g', '--GPU_num_per_server', help = 'number of GPU to use on one machine', type = int, default = 1)
+parser.add_argument('-bs', '--batch_size', type = int, default = 110)
+parser.add_argument('-lr', '--learning_rate', type = float, default = 0.001)
+parser.add_argument('-e', '--epoch', type = int, default = 1)
+
 args = vars(parser.parse_args())
 
 parameter_servers = args['ps_num'] #FLAGS.ps_num
 workers = args['wk_num'] #FLAGS.wk_num
 rm_addr = "http://127.0.0.1:5000" # "http://localhost:5000" # FLAGS.rm_addr
 #gpu_num = args['GPU_num_per_server']
+protocol = args['protocol']
+
+# hyperparameters
+batch_size = args['batch_size']
+learning_rate = args['learning_rate']
+epoch = args['epoch']
+
 logger.info('Get hyperparameters from command line.\n number of parameter servers: {} \n number of workers: {}'.format(parameter_servers, workers))
 
 # connect to resource manager
@@ -80,7 +92,7 @@ time.sleep(10)
 # connect to pss and workers by SSH with cluster specs
 
 for i in res_ip_192:
-    process = subprocess.Popen(["sh", "run_all.sh", str(ps_eth2).replace(" ", ""), str(wk_eth2).replace(" ", ""), str(i), str(res_ip_192.index(i)), str(gpu_index[res_ip_192.index(i)])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(["sh", "run_all.sh", str(ps_eth2).replace(" ", ""), str(wk_eth2).replace(" ", ""), str(i), str(res_ip_192.index(i)), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
 
 # check 'done' code from file
