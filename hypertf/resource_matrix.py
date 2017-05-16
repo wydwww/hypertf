@@ -53,7 +53,7 @@ if __name__ == '__main__':
     save_matrix(matrix, node_name)
 
     # test
-    print_node_usage('node_192.168.2.202', 2, matrix)
+    print_node_usage('node_192.168.2.200', 0, matrix)
     print_node_usage('node_192.168.2.200', 3, matrix)
 
     print 'node order: '

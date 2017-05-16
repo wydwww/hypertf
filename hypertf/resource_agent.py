@@ -35,6 +35,10 @@ def get_available_gpu_index():
 
 gpu = get_available_gpu_index()
 
+port = []
+for i in xrange(gpu):
+    port.append(get_port())
+
 def check_gpu_avail(ind, max_gpu_utilization=40, min_free_memory=50): 
     ans = True 
     nvmlInit() 
@@ -70,9 +74,10 @@ def check_gpu_avail(ind, max_gpu_utilization=40, min_free_memory=50):
 
     handle = nvmlDeviceGetHandleByIndex(ind)
     util = nvmlDeviceGetUtilizationRates(handle)
-    print util.gpu, util.memory    
-
-    if util.gpu < max_gpu_utilization and util.memory < min_free_memory:
+    meminfo = nvmlDeviceGetMemoryInfo(handle)
+    print util.gpu, util.memory, meminfo    
+    print meminfo.used*100/meminfo.total
+    if util.gpu < max_gpu_utilization and meminfo.used*100/meminfo.total < min_free_memory:
     #if meminfo.free/meminfo.total > max_gpu_utilization:
     #if meminfo.free/1024.**2 > MBmemory_needed: 
         ans = True 

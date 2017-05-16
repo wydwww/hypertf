@@ -1,12 +1,13 @@
 # import hypertf
-# import tensorflow as tf
 from resource_client import client
 import argparse
 import subprocess
 import time, sys, os
 import logging
 
+logging.basicConfig(filename='tfrunner.log', level=logging.INFO)
 logger = logging.getLogger(__name__)
+logdir = "/home/ywang/hypertf/hypertf/stderr/"
 
 # parse parameters from command line
 parser = argparse.ArgumentParser(description='Obtain parameters.')
@@ -55,24 +56,24 @@ wk_eth2 = []
 ps_eth0 = []
 wk_eth0 = []
 gpu_index = []
-
+device_count = 0
 for i in pss_list:
-    ps_eth2.append(eval(i[0])['eth2']+':'+str(eval(i[0])['port']))
+    ps_eth2.append(eval(i[0])['eth2']+':'+str(eval(i[0])['port'][device_count/4]))
     ps_eth0.append(eval(i[0])['eth0'])
+    device_count += 1
 
 for i in wks_list: 
-    wk_eth2.append(eval(i[0])['eth2']+':'+str(eval(i[0])['port']))
+    wk_eth2.append(eval(i[0])['eth2']+':'+str(eval(i[0])['port'][device_count/4]))
     wk_eth0.append(eval(i[0])['eth0'])
+    device_count += 1
 
 for i in resource_list:
     gpu_index.append(i[1])
 
-res_ip_192 = ps_eth0 + wk_eth0
-
 print "parameter servers: "
-print ps_eth0
+print ps_eth2
 print "workers: "
-print wk_eth0
+print wk_eth2
 print "gpu index:"
 print gpu_index
 
@@ -81,25 +82,28 @@ logger.info('Get resource.\n ps: {} \n worker: {} \n gpu: {}'.format(ps_eth0, wk
 """ compute """
 print "Computing..."
 #print (str(ps_ip).replace(" ", "")+ str(wk_ip).replace(" ", ""))
-time.sleep(10)
-
+#time.sleep(10)
+res_ip_192 = ps_eth0 + wk_eth0
 # connect to pss and workers by SSH with cluster specs
 
+ps_index = 0
 for i in ps_eth0:
     print "ps:"
     print i
-    process = subprocess.Popen(["sh", "run_all.sh", str(ps_eth2).replace(" ", ""), str(wk_eth2).replace(" ", ""), str(i), str(ps_eth0.index(i)), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'ps', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    time.sleep(10)
+    process = subprocess.Popen(["sh", "run_all.sh", str(ps_eth2).replace(" ", ""), str(wk_eth2).replace(" ", ""), str(i), str(ps_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'ps', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    ps_index += 1
+    time.sleep(2)
 
+wk_index = 0
 for i in wk_eth0:
     print 'wk:'
-    print i 
-    process = subprocess.Popen(["sh", "run_all.sh", str(ps_eth2).replace(" ", ""), str(wk_eth2).replace(" ", ""), str(i), str(wk_eth0.index(i)), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'worker', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    time.sleep(10)
+    print i
+    process = subprocess.Popen(["sh", "run_all.sh", str(ps_eth2).replace(" ", ""), str(wk_eth2).replace(" ", ""), str(i), str(wk_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'worker', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    wk_index += 1
+    time.sleep(2)
 
 # check 'done' code from file
-time.sleep(15)
-logdir = "/home/ywang/hypertf/hypertf/stderr/"
+time.sleep(5)
 filelist = os.listdir(logdir)
 success_counter = 0
 loglist = []

@@ -53,7 +53,7 @@ def schedule(ps_num, wk_num):
     for i in gpu_range:
         for j in xrange(len(server_range)):
             if (matrix[j][i] == 1):
-                resource_offered.append([resource[server_range[j]], gpu_range[i]])
+                resource_offered.append([resource[server_range[j]], i])
                 matrix[j][i] = 0
                 if len(resource_offered) >= res_number:
                     break
@@ -143,6 +143,8 @@ if __name__ == '__main__':
     matrix = get_resource_matrix(zk)
     server_range = resource.keys()
     gpu_range = eval(resource.values()[0])['gpu_avail_list']
+    print gpu_range
+    print server_range
     #print matrix
     for i in resource:
         print resource[i]
