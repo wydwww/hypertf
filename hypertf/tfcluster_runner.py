@@ -87,6 +87,15 @@ print "Computing..."
 #print (str(ps_ip).replace(" ", "")+ str(wk_ip).replace(" ", ""))
 #time.sleep(10)
 res_ip_192 = ps_eth0 + wk_eth0
+
+def delete_log(path):
+    filelist = [ f for f in os.listdir(path) if f.endswith(".log") ]
+    for f in filelist: 
+        os.remove(f)
+
+delete_log("./stderr")
+delete_log("./stdout")
+
 # connect to pss and workers by SSH with cluster specs
 
 ps_index = 0
