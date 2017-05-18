@@ -5,7 +5,10 @@ import subprocess
 import time, sys, os
 import logging
 
-logging.basicConfig(filename='tfrunner.log', level=logging.INFO)
+logging.basicConfig(filename='tfrunner.log', 
+                    level=logging.INFO, 
+                    format='%(asctime)s %(levelname)s %(message)s', 
+                    filemode='w')
 logger = logging.getLogger(__name__)
 logdir = "/home/ywang/hypertf/hypertf/stderr/"
 
@@ -102,27 +105,34 @@ for i in wk_eth0:
     wk_index += 1
     time.sleep(2)
 
+
 # check 'done' code from file
-time.sleep(5)
+time.sleep(10)
 filelist = os.listdir(logdir)
 success_counter = 0
 loglist = []
+
+logger.info('Start check log.')
 
 while len(loglist) != len(gpu_index):
     for i in filelist:
         if os.path.splitext(i)[1] == '.log' and i not in loglist:
             loglist.append(i)
+logger.info('Log list: {}'.format(loglist))
 
 while True:
     for logfile in loglist:
-        status = open(logdir + logfile, "r")
-        done = status.readlines()[-1]
+        while (len(open(logdir + logfile, "r").readlines()) == 0):
+            time.sleep(3)
+        done = open(logdir + logfile, "r").readlines()[-1]
+        
         if done == "done\n":
             success_counter += 1
             loglist.remove(logfile)
-            print(success_counter)
-        status.close()
+            print("worker done count: {}".format(success_counter))
+            logger.info('worker done: {}'.format(logfile))
         time.sleep(2)
+        
         if success_counter == len(wk_eth0):
             
             # release resource

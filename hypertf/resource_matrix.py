@@ -49,6 +49,7 @@ if __name__ == '__main__':
     resource = get_resource(zk)
     server_range = resource.keys()
     node_name = "usage_matrix"
+    #matrix = [[1, 1, 1, 0], [0, 0, 0, 0], [1, 1, 1, 0], [1, 1, 1, 0]]
     matrix = build_matrix(resource)    
     save_matrix(matrix, node_name)
 
