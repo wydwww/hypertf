@@ -73,6 +73,14 @@ for i in wks_list:
 for i in resource_list:
     gpu_index.append(i[1])
 
+ps_eth2 = str(ps_eth2).replace(" ","")
+ps_eth2 = str(ps_eth2).replace("'","")
+ps_eth2 = ps_eth2[1:-1]
+
+wk_eth2 = str(wk_eth2).replace(" ","") 
+wk_eth2 = str(wk_eth2).replace("'","")
+wk_eth2 = wk_eth2[1:-1]
+
 print "parameter servers: "
 print ps_eth2
 print "workers: "
@@ -90,11 +98,11 @@ res_ip_192 = ps_eth0 + wk_eth0
 
 def delete_log(path):
     filelist = [ f for f in os.listdir(path) if f.endswith(".log") ]
-    for f in filelist: 
-        os.remove(f)
+    for f in filelist:
+        os.remove(path+f)
 
-delete_log("./stderr")
-delete_log("./stdout")
+delete_log("./stderr/")
+delete_log("./stdout/")
 
 # connect to pss and workers by SSH with cluster specs
 
@@ -102,7 +110,9 @@ ps_index = 0
 for i in ps_eth0:
     print "ps:"
     print i
-    process = subprocess.Popen(["sh", "run_all.sh", str(ps_eth2).replace(" ", ""), str(wk_eth2).replace(" ", ""), str(i), str(ps_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'ps', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print "ps hosts: " + ps_eth2
+    print "worker hosts: " + wk_eth2
+    process = subprocess.Popen(["sh", "run_benchmark_cnn.sh", ps_eth2, wk_eth2, str(i), str(ps_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'ps', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     ps_index += 1
     time.sleep(2)
 
@@ -110,7 +120,7 @@ wk_index = 0
 for i in wk_eth0:
     print 'wk:'
     print i
-    process = subprocess.Popen(["sh", "run_all.sh", str(ps_eth2).replace(" ", ""), str(wk_eth2).replace(" ", ""), str(i), str(wk_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'worker', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(["sh", "run_benchmark_cnn.sh", ps_eth2, wk_eth2, str(i), str(wk_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'worker', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     wk_index += 1
     time.sleep(2)
 
