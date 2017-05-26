@@ -2,7 +2,7 @@
 from resource_client import client
 import argparse
 import subprocess
-import time, sys, os
+import time, sys, os, datetime
 import logging
 
 logging.basicConfig(filename='tfrunner.log', 
@@ -10,7 +10,6 @@ logging.basicConfig(filename='tfrunner.log',
                     format='%(asctime)s %(levelname)s %(message)s', 
                     filemode='w')
 logger = logging.getLogger(__name__)
-logdir = "/home/ywang/hypertf/hypertf/stderr/"
 
 # parse parameters from command line
 parser = argparse.ArgumentParser(description='Obtain parameters.')
@@ -101,8 +100,18 @@ def delete_log(path):
     for f in filelist:
         os.remove(path+f)
 
-delete_log("./stderr/")
-delete_log("./stdout/")
+# delete_log("./stderr/")
+# delete_log("./stdout/")
+
+# generate a unique task key
+task_key = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+logger.info('Task key: {}'.format(task_key))
+
+direrr = './stderr-'+task_key+'/'
+dirout = './stdout-'+task_key+'/'
+os.makedirs(direrr)
+os.makedirs(dirout)
+logdir = "/home/ywang/hypertf/hypertf/stderr-"+task_key+"/"
 
 # connect to pss and workers by SSH with cluster specs
 
@@ -112,7 +121,7 @@ for i in ps_eth0:
     print i
     print "ps hosts: " + ps_eth2
     print "worker hosts: " + wk_eth2
-    process = subprocess.Popen(["sh", "run_benchmark_cnn.sh", ps_eth2, wk_eth2, str(i), str(ps_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'ps', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(["sh", "run_benchmark_cnn.sh", ps_eth2, wk_eth2, str(i), str(ps_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'ps', script_name, task_key], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     ps_index += 1
     time.sleep(2)
 
@@ -120,7 +129,7 @@ wk_index = 0
 for i in wk_eth0:
     print 'wk:'
     print i
-    process = subprocess.Popen(["sh", "run_benchmark_cnn.sh", ps_eth2, wk_eth2, str(i), str(wk_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'worker', script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(["sh", "run_benchmark_cnn.sh", ps_eth2, wk_eth2, str(i), str(wk_index), str(gpu_index[res_ip_192.index(i)]), str(batch_size), str(learning_rate), str(epoch), protocol, 'worker', script_name, task_key], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     wk_index += 1
     time.sleep(2)
 
